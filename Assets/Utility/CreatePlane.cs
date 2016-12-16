@@ -10,7 +10,8 @@ public class CreatePlane : MonoBehaviour {
     /// this script also doesnt add a material so that needs to be added to the object or the plane will be pink.
     /// </summary>
 
-    public int xSize, zSize;
+    public int xSize = 20;
+    public int zSize = 20;
 
 	private Mesh mesh;
 	private Vector3[] vertices;
