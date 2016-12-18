@@ -48,7 +48,7 @@ public class CreateTerrain : MonoBehaviour {
             {
                 GameObject chunk = new GameObject("chunk");
                 chunk.transform.localScale = new Vector3(scaleModefier, 1, scaleModefier);
-                chunk.transform.position = new Vector3(((x*20) * scaleModefier)-xSize*20/2+10, 0, ((z*20) * scaleModefier)-zSize*20/2+10);
+                chunk.transform.position = new Vector3(((x*20) * scaleModefier)-x*1, 0, ((z*20) * scaleModefier)-z*1);
                 chunk.AddComponent<CreatePlane>().Generate();
                 chunk.GetComponent<Renderer>().material = terrainMat;
                 planes[x, z] = chunk;
@@ -61,13 +61,13 @@ public class CreateTerrain : MonoBehaviour {
 
     void GenerateVirtualVertices()
     {
-        int gridDimx = (xSize * 20) + 1;
-        int gridDimz = (zSize * 20) + 1;
+        int gridDimx = (xSize * 19) + 1;
+        int gridDimz = (zSize * 19) + 1;
 
         virtualVertices = new Vector3[(gridDimx * gridDimz)];
-        for (int i = 0, z = 0 - (zSize * 20) / 2; z <= (zSize * 20) / 2; z++)
+        for (int i = 0, z = 0; z <= (zSize * 19); z++)
         {
-            for (int x = 0 - (xSize * 20) / 2; x <= (xSize * 20) / 2; x++, i++)
+            for (int x = 0; x <= (xSize * 19); x++, i++)
             {
                 virtualVertices[i] = new Vector3(x * scaleModefier, 0, z * scaleModefier);
             }
@@ -94,11 +94,11 @@ public class CreateTerrain : MonoBehaviour {
         {
 
 
-            int hoofdPlanex = (i % (21 * 21)) / 21;
-            int hoofdPlanez = i / (21 * 21);
+            int hoofdPlanex = (i % (20 * 20)) / 20;
+            int hoofdPlanez = i / (20 * 20);
 
-            int subPlanex = i % 21;
-            int subPlanez = (i % (21 * 21)) / (21 * 21);
+            int subPlanex = i % 20;
+            int subPlanez = (i % (20 * 20)) / (20 * 20);
 
             //print(hoofdPlanex + " hoofdplanex ");
             //print(hoofdPlanez + " hoofdplanez ");
@@ -108,7 +108,7 @@ public class CreateTerrain : MonoBehaviour {
             Mesh plane = planes[0, 0].GetComponent<MeshFilter>().mesh;
             plane.vertices[subPlanex * subPlanez].y = virtualVertices[i].y;
             print(planes[0, 0].gameObject.name);
-            print(plane.vertices[i]);
+            //print(plane.vertices[i]);
             if (subPlanex == 0 && hoofdPlanex > 0)
             {
                 //Mesh prevSubPlane = array[hoofdPlanez][hoofdPlanex - 1];
@@ -124,13 +124,13 @@ public class CreateTerrain : MonoBehaviour {
             plane.Optimize();
 
         }
-        /*foreach(GameObject G in planes)
+        foreach(GameObject G in planes)
         {
-            Mesh plane = planes[0, 0].GetComponent<MeshFilter>().mesh;
+            Mesh plane = G.GetComponent<MeshFilter>().mesh;
             plane.RecalculateBounds();
             plane.RecalculateNormals();
             plane.Optimize();
-        }*/
+        }
     }
 
     public void OnDrawGizmos()

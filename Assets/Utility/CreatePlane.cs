@@ -10,8 +10,8 @@ public class CreatePlane : MonoBehaviour {
     /// this script also doesnt add a material so that needs to be added to the object or the plane will be pink.
     /// </summary>
 
-    public int xSize = 20;
-    public int zSize = 20;
+    public int xSize = 19;
+    public int zSize = 19;
 
 	private Mesh mesh;
 	private Vector3[] vertices;
@@ -24,8 +24,8 @@ public class CreatePlane : MonoBehaviour {
 		Vector2[] uv = new Vector2[vertices.Length];
 		Vector4[] tangents = new Vector4[vertices.Length];
 		Vector4 tangent = new Vector4(1f, 0f, 0f, -1f);
-		for (int i = 0, z = 0 - zSize / 2; z <= zSize / 2; z++) {
-			for (int x = 0 - xSize / 2; x <= xSize / 2; x++, i++) {
+		for (int i = 0, z = 0; z <= zSize; z++) {
+			for (int x = 0; x <= xSize; x++, i++) {
 				vertices[i] = new Vector3(x, 0, z);
 				uv[i] = new Vector2((float)x / xSize, (float)z / zSize);
 				tangents[i] = tangent;
