@@ -61,8 +61,8 @@ public class CreateTerrain : MonoBehaviour {
 
     void GenerateVirtualVertices()
     {
-        int gridDimx = (xSize * 19) + 1;
-        int gridDimz = (zSize * 19) + 1;
+        int gridDimx = (xSize * 20);
+        int gridDimz = (zSize * 20);
 
         virtualVertices = new Vector3[(gridDimx * gridDimz)];
         for (int i = 0, z = 0; z <= (zSize * 19); z++)
@@ -100,8 +100,8 @@ public class CreateTerrain : MonoBehaviour {
             int subPlanex = i % 20;
             int subPlanez = (i % (20 * 20)) / (20 * 20);
 
-            //print(hoofdPlanex + " hoofdplanex ");
-            //print(hoofdPlanez + " hoofdplanez ");
+            print(hoofdPlanex + " hoofdplanex ");
+            print(hoofdPlanez + " hoofdplanez ");
 
             //print(subPlanex + " subplanex " + i);
             //print(subPlanez + " subplanez " + i);
