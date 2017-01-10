@@ -8,14 +8,18 @@ public class CreatePlaneEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        CreatePlane terrainGen = (CreatePlane)target;
+        CreatePlane planeGen = (CreatePlane)target;
         if (DrawDefaultInspector())
         {
 
         }
         if (GUILayout.Button("generate"))
         {
-            terrainGen.Generate();
+            planeGen.Generate();
+        }
+        if (GUILayout.Button("debug"))
+        {
+            planeGen.DebugNodes();
         }
     }
 }

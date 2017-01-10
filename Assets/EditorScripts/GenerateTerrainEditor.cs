@@ -19,5 +19,9 @@ public class GenerateTerrainEditor : Editor
         {
             terrainGen.Generate();
         }
+        if (GUILayout.Button("debug"))
+        {
+            terrainGen.DebugNodes();
+        }
     }
 }

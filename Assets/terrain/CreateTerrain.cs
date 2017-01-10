@@ -9,6 +9,7 @@ public class CreateTerrain : MonoBehaviour {
     private int xSize;
     [SerializeField]
     private int zSize;
+
     [SerializeField]
     private int heightScale = 5;//hoogte scale in units
     [SerializeField]
@@ -28,8 +29,10 @@ public class CreateTerrain : MonoBehaviour {
 
     [SerializeField]
     private bool showVirtualGrid;
+    private bool showDebugGizmos;
 
     Vector3[] virtualVertices;
+    Vector3[] debugVertices;
     GameObject[,] planes;
     Thread buildThread;
 
@@ -100,14 +103,14 @@ public class CreateTerrain : MonoBehaviour {
             int subPlanex = i % 20;
             int subPlanez = (i % (20 * 20)) / (20 * 20);
 
-            print(hoofdPlanex + " hoofdplanex ");
-            print(hoofdPlanez + " hoofdplanez ");
+            //print(hoofdPlanex + " hoofdplanex ");
+            //print(hoofdPlanez + " hoofdplanez ");
 
             //print(subPlanex + " subplanex " + i);
             //print(subPlanez + " subplanez " + i);
             Mesh plane = planes[0, 0].GetComponent<MeshFilter>().mesh;
             plane.vertices[subPlanex * subPlanez].y = virtualVertices[i].y;
-            print(planes[0, 0].gameObject.name);
+            //print(planes[0, 0].gameObject.name);
             //print(plane.vertices[i]);
             if (subPlanex == 0 && hoofdPlanex > 0)
             {
@@ -133,8 +136,35 @@ public class CreateTerrain : MonoBehaviour {
         }
     }
 
+    public void DebugNodes()
+    {
+        StartCoroutine(DebugGrid());
+    }
+
+    //public void Debug()
+    public IEnumerator DebugGrid()
+    {
+        debugVertices = new Vector3[virtualVertices.Length];
+        showDebugGizmos = true;
+        for (int i = 0; i < virtualVertices.Length; i++)
+        {
+            debugVertices[i] = virtualVertices[i];
+            yield return new WaitForSeconds(.1f);
+        }
+        showDebugGizmos = false;
+        yield return null;
+    }
+
     public void OnDrawGizmos()
     {
+        if (showDebugGizmos && virtualVertices.Length >= 0)
+        {
+            foreach (Vector3 v in debugVertices)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawCube(v, Vector3.one / 2);
+            }
+        }
         if (showVirtualGrid && virtualVertices.Length >= 0)
         {
             foreach(Vector3 v in virtualVertices)
