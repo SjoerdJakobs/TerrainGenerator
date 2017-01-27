@@ -129,6 +129,6 @@ public class CreateSmoothTerrain : MonoBehaviour
 
         plane.RecalculateBounds();
         plane.RecalculateNormals();
-        plane.Optimize();
+        ;
     }
 }

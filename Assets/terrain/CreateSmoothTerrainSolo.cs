@@ -113,6 +113,6 @@ public class CreateSmoothTerrainSolo : MonoBehaviour {
 
         plane.RecalculateBounds();
         plane.RecalculateNormals();
-        plane.Optimize();
+        ;
     }
 }

@@ -94,9 +94,7 @@ public class CreateTerrain : MonoBehaviour {
             //print(planes.Length);
         }
         for (int i = 0; i < virtualVertices.Length; i++)
-        {
-
-
+        {        
             int hoofdPlanex = (i % (20 * 20)) / 20;
             int hoofdPlanez = i / (20 * 20);
 
@@ -124,7 +122,7 @@ public class CreateTerrain : MonoBehaviour {
             }
             plane.RecalculateBounds();
             plane.RecalculateNormals();
-            plane.Optimize();
+            ;
 
         }
         foreach(GameObject G in planes)
@@ -132,7 +130,7 @@ public class CreateTerrain : MonoBehaviour {
             Mesh plane = G.GetComponent<MeshFilter>().mesh;
             plane.RecalculateBounds();
             plane.RecalculateNormals();
-            plane.Optimize();
+            ;
         }
     }
 
