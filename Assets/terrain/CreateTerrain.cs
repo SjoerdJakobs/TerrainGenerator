@@ -55,6 +55,7 @@ public class CreateTerrain : MonoBehaviour {
                 chunk.AddComponent<CreatePlane>().Generate();
                 chunk.GetComponent<Renderer>().material = terrainMat;
                 planes[x, z] = chunk;
+                print("b");
             }
         }
         //buildThread.Start();
@@ -88,18 +89,47 @@ public class CreateTerrain : MonoBehaviour {
 
     void SetPlaneVertices()
     {
-        for (int i = 0; i < virtualVertices.Length; i++)
+        Vector3[] newVertices = new Vector3[20 * 20];
+        int subPlanex = 0;
+        int subPlanez = 0;
+        int row = 0;
+        for (int i = 0, j = 0; i < virtualVertices.Length; i++, j++)
         {
-            //print("test");
-            //print(planes.Length);
-        }
-        for (int i = 0; i < virtualVertices.Length; i++)
-        {        
-            int hoofdPlanex = (i % (20 * 20)) / 20;
-            int hoofdPlanez = i / (20 * 20);
+            if (j == 20)
+            {
+                subPlanex++;
+                if (subPlanex == xSize)
+                {
+                    subPlanex = 0;
+                    row++;
+                }
+                j = 0;
+                if (row == 20)
+                {
+                    row = 0;
+                    subPlanez++;
+                }
+            }
 
-            int subPlanex = i % 20;
-            int subPlanez = (i % (20 * 20)) / (20 * 20);
+            //Mesh plane = planes[subPlanex,subPlanez].GetComponent<MeshFilter>().mesh;
+            //print(plane);
+            newVertices[(row * 20) + j].y = virtualVertices[i].y;
+
+        }
+        Mesh plane = planes[0, 0].GetComponent<MeshFilter>().mesh;
+        plane.vertices = newVertices;
+        plane.RecalculateBounds();
+        plane.RecalculateNormals();
+
+        print("a");
+
+        /*for (int i = 0; i < virtualVertices.Length; i++)
+        {        
+            //int hoofdPlanex = (i % (20 * 20)) / 20;
+            //int hoofdPlanez = i / (20 * 20);
+
+            //int subPlanex = i % 20;
+            //int subPlanez = (i % (20 * 20)) / (20 * 20);
 
             //print(hoofdPlanex + " hoofdplanex ");
             //print(hoofdPlanez + " hoofdplanez ");
@@ -122,16 +152,9 @@ public class CreateTerrain : MonoBehaviour {
             }
             plane.RecalculateBounds();
             plane.RecalculateNormals();
-            ;
+            
 
-        }
-        foreach(GameObject G in planes)
-        {
-            Mesh plane = G.GetComponent<MeshFilter>().mesh;
-            plane.RecalculateBounds();
-            plane.RecalculateNormals();
-            ;
-        }
+        }*/
     }
 
     public void DebugNodes()
