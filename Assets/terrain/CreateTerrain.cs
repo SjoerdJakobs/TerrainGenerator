@@ -13,6 +13,8 @@ public class CreateTerrain : MonoBehaviour {
     [SerializeField]
     private int heightScale = 5;//hoogte scale in units
     [SerializeField]
+    private int stopDebug;
+    [SerializeField]
     private float scaleModefier;
     [SerializeField]
     private float pulldownModefier;
@@ -33,8 +35,11 @@ public class CreateTerrain : MonoBehaviour {
 
     Vector3[] virtualVertices;
     Vector3[] debugVertices;
+    VirtualSubPlane[] virtualPlanes;
+    
     GameObject[,] planes;
     Thread buildThread;
+
 
     readonly object locker = new object();
 
@@ -89,39 +94,51 @@ public class CreateTerrain : MonoBehaviour {
 
     void SetPlaneVertices()
     {
-        Vector3[] newVertices = new Vector3[20 * 20];
+        //Vector3[] newVertices = new Vector3[20 * 20];
         int subPlanex = 0;
         int subPlanez = 0;
         int row = 0;
-        for (int i = 0, j = 0; i < virtualVertices.Length; i++, j++)
+        for (int i = 0, j = 0, t = 0; t < (xSize*20)*(zSize*20); i++, j++, t++)
         {
-            if (j == 20)
+            if (j > 19)
             {
                 subPlanex++;
+                i--;
                 if (subPlanex == xSize)
                 {
                     subPlanex = 0;
+                    i ++;
                     row++;
                 }
                 j = 0;
-                if (row == 20)
+                if (row > 19)
                 {
                     row = 0;
+                    i -= (xSize*20);
                     subPlanez++;
                 }
             }
-
-            //Mesh plane = planes[subPlanex,subPlanez].GetComponent<MeshFilter>().mesh;
+            print(t +" truecount  "+ i +" i count");
+            Mesh plane = planes[subPlanex,subPlanez].GetComponent<MeshFilter>().mesh;
             //print(plane);
-            newVertices[(row * 20) + j].y = virtualVertices[i].y;
+            Vector3 vertex = plane.vertices[(row * 20) + j];
+            vertex.y = virtualVertices[i].y;
+            plane.vertices[(row * 20) + j] = vertex;
 
         }
-        Mesh plane = planes[0, 0].GetComponent<MeshFilter>().mesh;
-        plane.vertices = newVertices;
-        plane.RecalculateBounds();
-        plane.RecalculateNormals();
+        foreach (GameObject m in planes)
+        {
+            Mesh planeMesh = m.GetComponent<MeshFilter>().mesh;
+            planeMesh.RecalculateBounds();
+            planeMesh.RecalculateNormals();
+            print("a");
+        }
+        //Mesh plane = planes[0, 0].GetComponent<MeshFilter>().mesh;
+        //plane.vertices = newVertices;
+        //plane.RecalculateBounds();
+        //plane.RecalculateNormals();
 
-        print("a");
+        //print("a");
 
         /*for (int i = 0; i < virtualVertices.Length; i++)
         {        
@@ -186,6 +203,12 @@ public class CreateTerrain : MonoBehaviour {
                 Gizmos.DrawCube(v, Vector3.one / 2);
             }
         }
+        if (stopDebug > 0)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawCube(virtualVertices[stopDebug], Vector3.one);
+        }
+
         if (showVirtualGrid && virtualVertices.Length >= 0)
         {
             foreach(Vector3 v in virtualVertices)
@@ -195,4 +218,9 @@ public class CreateTerrain : MonoBehaviour {
             }
         }
     }
+}
+
+public class VirtualSubPlane
+{
+    public Vector3[] vertices;
 }
