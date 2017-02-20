@@ -35,7 +35,7 @@ public class CreateTerrain : MonoBehaviour {
 
     Vector3[] virtualVertices;
     Vector3[] debugVertices;
-    VirtualSubPlane[] virtualPlanes;
+    VirtualSubPlane[,] virtualPlanes;
     
     GameObject[,] planes;
     Thread buildThread;
@@ -49,23 +49,29 @@ public class CreateTerrain : MonoBehaviour {
     {
         randomSeed = (float)Random.Range(150, 300) / 100;
         //buildThread = new Thread(GenerateVirtualVertices);
+        virtualPlanes = new VirtualSubPlane[xSize, zSize];
         planes = new GameObject[xSize, zSize];
         for (int i = 0, z = 0; z < zSize; z++)
         {
             for (int x = 0; x < xSize; x++, i++)
             {
                 GameObject chunk = new GameObject("chunk");
+                VirtualSubPlane virtualPlane = new VirtualSubPlane();
                 chunk.transform.localScale = new Vector3(scaleModefier, 1, scaleModefier);
-                chunk.transform.position = new Vector3(((x*20) * scaleModefier)-x*1, 0, ((z*20) * scaleModefier)-z*1);
+                chunk.transform.position = new Vector3(((x*20) * scaleModefier)-x*(1*scaleModefier), 0, ((z*20) * scaleModefier)-z*(1*scaleModefier));
                 chunk.AddComponent<CreatePlane>().Generate();
                 chunk.GetComponent<Renderer>().material = terrainMat;
                 planes[x, z] = chunk;
-                print("b");
+
+                virtualPlane.vertices = chunk.GetComponent<MeshFilter>().mesh.vertices;
+                virtualPlanes[x, z] = virtualPlane;
+
+                //print("b");
             }
         }
         //buildThread.Start();
         GenerateVirtualVertices();
-        SetPlaneVertices();
+        //SetPlaneVertices();
     }
 
     void GenerateVirtualVertices()
@@ -98,7 +104,7 @@ public class CreateTerrain : MonoBehaviour {
         int subPlanex = 0;
         int subPlanez = 0;
         int row = 0;
-        for (int i = 0, j = 0, t = 0; t < (xSize*20)*(zSize*20); i++, j++, t++)
+        for (int i = 0, j = 0, t = 0; t < (xSize * 20) * (zSize * 20); i++, j++, t++)
         {
             if (j > 19)
             {
@@ -107,26 +113,31 @@ public class CreateTerrain : MonoBehaviour {
                 if (subPlanex == xSize)
                 {
                     subPlanex = 0;
-                    i ++;
+                    i++;
                     row++;
                 }
                 j = 0;
                 if (row > 19)
                 {
                     row = 0;
-                    i -= (xSize*20);
+                    i -= (xSize * 20);
                     subPlanez++;
                 }
             }
-            print(t +" truecount  "+ i +" i count");
-            Mesh plane = planes[subPlanex,subPlanez].GetComponent<MeshFilter>().mesh;
-            //print(plane);
-            Vector3 vertex = plane.vertices[(row * 20) + j];
-            vertex.y = virtualVertices[i].y;
-            plane.vertices[(row * 20) + j] = vertex;
-
+            virtualPlanes[subPlanex, subPlanez].vertices[(row * 20) + j].y = virtualVertices[i].y;
+        } 
+        for (int i = 0, z = 0; z < zSize; z++)
+        {
+            for (int x = 0; x < xSize; x++, i++)
+            {
+                Mesh planeMesh = planes[x, z].GetComponent<MeshFilter>().mesh;
+                planeMesh.vertices = virtualPlanes[x, z].vertices;
+                planeMesh.RecalculateBounds();
+                planeMesh.RecalculateNormals();
+            }
         }
-        foreach (GameObject m in planes)
+
+        /*foreach (GameObject m in planes)
         {
             Mesh planeMesh = m.GetComponent<MeshFilter>().mesh;
             planeMesh.RecalculateBounds();
