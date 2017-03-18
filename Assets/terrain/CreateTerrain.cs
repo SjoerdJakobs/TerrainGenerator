@@ -14,6 +14,7 @@ public class CreateTerrain : MonoBehaviour {
     private int heightScale = 5;//hoogte scale in units
     [SerializeField]
     private int stopDebug;
+
     [SerializeField]
     private float scaleModefier;
     [SerializeField]
@@ -36,8 +37,8 @@ public class CreateTerrain : MonoBehaviour {
     Vector3[] virtualVertices;
     Vector3[] debugVertices;
     VirtualSubPlane[,] virtualPlanes;
-    
     GameObject[,] planes;
+    GameObject chunkParrent;
     Thread buildThread;
 
 
@@ -47,6 +48,15 @@ public class CreateTerrain : MonoBehaviour {
 
     public void Generate()
     {
+        if (chunkParrent != null)
+        {
+            Destroy(chunkParrent);
+            foreach (GameObject G in planes)
+            {
+                Destroy(G);
+            }
+        }
+        chunkParrent = new GameObject("Terrain");
         randomSeed = (float)Random.Range(150, 300) / 100;
         //buildThread = new Thread(GenerateVirtualVertices);
         virtualPlanes = new VirtualSubPlane[xSize, zSize];
@@ -66,12 +76,13 @@ public class CreateTerrain : MonoBehaviour {
                 virtualPlane.vertices = chunk.GetComponent<MeshFilter>().mesh.vertices;
                 virtualPlanes[x, z] = virtualPlane;
 
+                chunk.transform.parent = chunkParrent.transform;
                 //print("b");
             }
         }
         //buildThread.Start();
         GenerateVirtualVertices();
-        //SetPlaneVertices();
+        SetPlaneVertices();
     }
 
     void GenerateVirtualVertices()
@@ -92,9 +103,10 @@ public class CreateTerrain : MonoBehaviour {
         randomDetai = detai * (randomSeed / 2);
         for (int v = 0; v < virtualVertices.Length; v++)
         {
-            virtualVertices[v].y = (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai) * randomSeed) * randomHeight) - (Mathf.Pow(virtualVertices[v].x, 2) / pulldownModefier) - (Mathf.Pow(virtualVertices[v].z, 2) / pulldownModefier);
-            virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 1.2f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 4f) * randomSeed) * (randomHeight / 20));
-            virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 0.1f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 1f) * randomSeed) * (randomHeight / 40));
+            virtualVertices[v].y = (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai) * randomSeed) * randomHeight) - ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
+            virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 500) / randomDetai/1000) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai/500) * randomSeed) * (randomHeight/10));
+            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 1.2f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 4f) * randomSeed) * (randomHeight / 20));
+            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 0.1f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 1f) * randomSeed) * (randomHeight / 40));
         }
     }
 
@@ -120,7 +132,7 @@ public class CreateTerrain : MonoBehaviour {
                 if (row > 19)
                 {
                     row = 0;
-                    i -= (xSize * 20);
+                    i -= 1+(xSize * 19);
                     subPlanez++;
                 }
             }
