@@ -123,7 +123,7 @@ public class CreateSmoothTerrain : MonoBehaviour
         }
         plane.vertices = newVertices;
 
-        MeshRenderer planeRenderer = GetComponent<MeshRenderer>();
+        //MeshRenderer planeRenderer = GetComponent<MeshRenderer>();
         //planeRenderer.material = beachLands;
         this.gameObject.AddComponent<MeshCollider>();
 

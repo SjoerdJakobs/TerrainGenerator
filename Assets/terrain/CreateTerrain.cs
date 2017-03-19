@@ -42,7 +42,7 @@ public class CreateTerrain : MonoBehaviour {
     Thread buildThread;
 
 
-    readonly object locker = new object();
+    //readonly object locker = new object();
 
 
 
