@@ -11,28 +11,25 @@ public class CreateTerrain : MonoBehaviour {
     private int zSize;
 
     [SerializeField]
-    private int heightScale = 5;//hoogte scale in units
-    [SerializeField]
-    private int stopDebug;
-
-    [SerializeField]
     private float scaleModefier;
     [SerializeField]
     private float pulldownModefier;
-    [SerializeField]
-    private float detai = 5.0f;//hoe stijl zijn je heuvels?
     private float randomHeight;
     private float randomSeed;
-    [SerializeField]
-    private float seed = 1000;
     private float randomDetai;
+
+    [SerializeField]
+    private bool pullDownEdges;
+    [SerializeField]
+    private bool showVirtualGrid;
+    private bool showDebugGizmos;
+
+    [SerializeField]
+    private List<PerlinMod> perlinModifiers;
 
     [SerializeField]
     private Material terrainMat;
 
-    [SerializeField]
-    private bool showVirtualGrid;
-    private bool showDebugGizmos;
 
     Vector3[] virtualVertices;
     Vector3[] debugVertices;
@@ -77,7 +74,6 @@ public class CreateTerrain : MonoBehaviour {
                 virtualPlanes[x, z] = virtualPlane;
 
                 chunk.transform.parent = chunkParrent.transform;
-                //print("b");
             }
         }
         //buildThread.Start();
@@ -98,13 +94,21 @@ public class CreateTerrain : MonoBehaviour {
                 virtualVertices[i] = new Vector3(x * scaleModefier, 0, z * scaleModefier);
             }
         }
-        //randomSeed = (float)Random.Range(150, 300) / 100;
-        randomHeight = heightScale + heightScale * (randomSeed / 10);
-        randomDetai = detai * (randomSeed / 2);
         for (int v = 0; v < virtualVertices.Length; v++)
         {
-            virtualVertices[v].y = (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai) * randomSeed) * randomHeight) - ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
-            virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 500) / randomDetai/1000) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai/500) * randomSeed) * (randomHeight/10));
+            if(pullDownEdges)
+            {
+                //if(virtualVertices[v].x = )
+                virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
+            }
+            for (int i = 0; i < perlinModifiers.Count; i++)
+            {
+                randomHeight = perlinModifiers[i].heightScale + perlinModifiers[i].heightScale * (randomSeed / 10);
+                randomDetai = perlinModifiers[i].detai * (randomSeed / 2);
+                virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed) * randomHeight);
+            }
+            //virtualVertices[v].y = (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai) * randomSeed) * randomHeight) - ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
+            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 500) / randomDetai/1000) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai/500) * randomSeed) * (randomHeight/10));
             //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 1.2f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 4f) * randomSeed) * (randomHeight / 20));
             //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 0.1f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 1f) * randomSeed) * (randomHeight / 40));
         }
@@ -112,7 +116,6 @@ public class CreateTerrain : MonoBehaviour {
 
     void SetPlaneVertices()
     {
-        //Vector3[] newVertices = new Vector3[20 * 20];
         int subPlanex = 0;
         int subPlanez = 0;
         int row = 0;
@@ -148,8 +151,69 @@ public class CreateTerrain : MonoBehaviour {
                 planeMesh.RecalculateNormals();
             }
         }
+    }
+    #region Debuging
 
-        /*foreach (GameObject m in planes)
+    public void DebugNodes()
+    {
+        StartCoroutine(DebugGrid());
+    }
+
+    //public void Debug()
+    public IEnumerator DebugGrid()
+    {
+        debugVertices = new Vector3[virtualVertices.Length];
+        showDebugGizmos = true;
+        for (int i = 0; i < virtualVertices.Length; i++)
+        {
+            debugVertices[i] = virtualVertices[i];
+            yield return new WaitForSeconds(.1f);
+        }
+        showDebugGizmos = false;
+        yield return null;
+    }
+
+    public void OnDrawGizmos()
+    {
+        if (showDebugGizmos && virtualVertices.Length >= 0)
+        {
+            foreach (Vector3 v in debugVertices)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawCube(v, Vector3.one / 2);
+            }
+        }
+        if (showVirtualGrid && virtualVertices.Length >= 0)
+        {
+            foreach(Vector3 v in virtualVertices)
+            {
+                Gizmos.color = Color.black;
+                Gizmos.DrawCube(v, Vector3.one/2);
+            }
+        }
+    }
+    #endregion
+}
+
+public class VirtualSubPlane
+{
+    public Vector3[] vertices;
+}
+
+[System.Serializable]
+public class PerlinMod
+{
+    public int heightScale;
+    public float detai;
+    public float seed;
+}
+
+
+
+
+
+
+/*foreach (GameObject m in planes)
         {
             Mesh planeMesh = m.GetComponent<MeshFilter>().mesh;
             planeMesh.RecalculateBounds();
@@ -195,55 +259,3 @@ public class CreateTerrain : MonoBehaviour {
             
 
         }*/
-    }
-
-    public void DebugNodes()
-    {
-        StartCoroutine(DebugGrid());
-    }
-
-    //public void Debug()
-    public IEnumerator DebugGrid()
-    {
-        debugVertices = new Vector3[virtualVertices.Length];
-        showDebugGizmos = true;
-        for (int i = 0; i < virtualVertices.Length; i++)
-        {
-            debugVertices[i] = virtualVertices[i];
-            yield return new WaitForSeconds(.1f);
-        }
-        showDebugGizmos = false;
-        yield return null;
-    }
-
-    public void OnDrawGizmos()
-    {
-        if (showDebugGizmos && virtualVertices.Length >= 0)
-        {
-            foreach (Vector3 v in debugVertices)
-            {
-                Gizmos.color = Color.red;
-                Gizmos.DrawCube(v, Vector3.one / 2);
-            }
-        }
-        if (stopDebug > 0)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawCube(virtualVertices[stopDebug], Vector3.one);
-        }
-
-        if (showVirtualGrid && virtualVertices.Length >= 0)
-        {
-            foreach(Vector3 v in virtualVertices)
-            {
-                Gizmos.color = Color.black;
-                Gizmos.DrawCube(v, Vector3.one/2);
-            }
-        }
-    }
-}
-
-public class VirtualSubPlane
-{
-    public Vector3[] vertices;
-}
