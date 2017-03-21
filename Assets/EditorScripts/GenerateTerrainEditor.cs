@@ -11,6 +11,10 @@ public class GenerateTerrainEditor : Editor
     public override void OnInspectorGUI()
     {
         CreateTerrain terrainGen = (CreateTerrain)target;
+        if (GUILayout.Button("generate"))
+        {
+            terrainGen.Generate();
+        }
         if (DrawDefaultInspector())
         {
 
@@ -18,10 +22,6 @@ public class GenerateTerrainEditor : Editor
         if (GUILayout.Button("generate"))
         {
             terrainGen.Generate();
-        }
-        if (GUILayout.Button("debug"))
-        {
-            terrainGen.DebugNodes();
         }
     }
 }

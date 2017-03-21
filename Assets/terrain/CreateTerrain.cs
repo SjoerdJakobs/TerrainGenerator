@@ -3,6 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 
+public enum TerrainType
+{
+    pangea = 0,
+    straitZ = 1,
+    straitX = 2,
+    islands = 3,
+    roundIsland = 4,
+    inlandSea = 5,
+    flat = 6
+}
+
 public class CreateTerrain : MonoBehaviour {
 
     [SerializeField]
@@ -19,10 +30,7 @@ public class CreateTerrain : MonoBehaviour {
     private float randomDetai;
 
     [SerializeField]
-    private bool pullDownEdges;
-    [SerializeField]
-    private bool showVirtualGrid;
-    private bool showDebugGizmos;
+    private TerrainType TerrainTypes;    
 
     [SerializeField]
     private List<PerlinMod> perlinModifiers;
@@ -32,7 +40,6 @@ public class CreateTerrain : MonoBehaviour {
 
 
     Vector3[] virtualVertices;
-    Vector3[] debugVertices;
     VirtualSubPlane[,] virtualPlanes;
     GameObject[,] planes;
     GameObject chunkParrent;
@@ -52,6 +59,9 @@ public class CreateTerrain : MonoBehaviour {
             {
                 Destroy(G);
             }
+            virtualPlanes = new VirtualSubPlane[0,0];
+            planes = new GameObject[0, 0];
+            virtualVertices = new Vector3[0];
         }
         chunkParrent = new GameObject("Terrain");
         randomSeed = (float)Random.Range(150, 300) / 100;
@@ -69,10 +79,8 @@ public class CreateTerrain : MonoBehaviour {
                 chunk.AddComponent<CreatePlane>().Generate();
                 chunk.GetComponent<Renderer>().material = terrainMat;
                 planes[x, z] = chunk;
-
-                virtualPlane.vertices = chunk.GetComponent<MeshFilter>().mesh.vertices;
+                virtualPlane.vertices = chunk.GetComponent<MeshFilter>().sharedMesh.vertices;
                 virtualPlanes[x, z] = virtualPlane;
-
                 chunk.transform.parent = chunkParrent.transform;
             }
         }
@@ -96,16 +104,38 @@ public class CreateTerrain : MonoBehaviour {
         }
         for (int v = 0; v < virtualVertices.Length; v++)
         {
-            if(pullDownEdges)
+            switch (TerrainTypes)
             {
-                //if(virtualVertices[v].x = )
-                virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
+                case TerrainType.flat:
+                    
+                    break;
+                case TerrainType.inlandSea:
+                    virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
+                    break;
+                case TerrainType.islands:
+                    virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
+                    break;
+                case TerrainType.pangea:
+                    virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
+                    break;
+                case TerrainType.roundIsland:
+                    virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
+                    break;
+                case TerrainType.straitX:
+                    virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
+                    break;
+                case TerrainType.straitZ:
+                    virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
+                    break;
+                default:
+                    Debug.LogError("wrong switch input");
+                    break;
             }
             for (int i = 0; i < perlinModifiers.Count; i++)
             {
                 randomHeight = perlinModifiers[i].heightScale + perlinModifiers[i].heightScale * (randomSeed / 10);
                 randomDetai = perlinModifiers[i].detai * (randomSeed / 2);
-                virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed) * randomHeight);
+                virtualVertices[v].y += perlinModifiers[i].slopeRatio.Evaluate(Mathf.PerlinNoise(((virtualVertices[v].x + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed)) * randomHeight;
             }
             //virtualVertices[v].y = (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai) * randomSeed) * randomHeight) - ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
             //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 500) / randomDetai/1000) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai/500) * randomSeed) * (randomHeight/10));
@@ -145,15 +175,16 @@ public class CreateTerrain : MonoBehaviour {
         {
             for (int x = 0; x < xSize; x++, i++)
             {
-                Mesh planeMesh = planes[x, z].GetComponent<MeshFilter>().mesh;
+                Mesh planeMesh = planes[x, z].GetComponent<MeshFilter>().sharedMesh;
                 planeMesh.vertices = virtualPlanes[x, z].vertices;
                 planeMesh.RecalculateBounds();
                 planeMesh.RecalculateNormals();
             }
         }
     }
-    #region Debuging
 
+    #region Debuging
+    /*
     public void DebugNodes()
     {
         StartCoroutine(DebugGrid());
@@ -191,7 +222,7 @@ public class CreateTerrain : MonoBehaviour {
                 Gizmos.DrawCube(v, Vector3.one/2);
             }
         }
-    }
+    }*/
     #endregion
 }
 
@@ -203,9 +234,11 @@ public class VirtualSubPlane
 [System.Serializable]
 public class PerlinMod
 {
+    public string ModifierName;
     public int heightScale;
     public float detai;
     public float seed;
+    public AnimationCurve slopeRatio;
 }
 
 
