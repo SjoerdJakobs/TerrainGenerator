@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System;
 
 public enum TerrainType
 {
@@ -59,12 +60,16 @@ public class CreateTerrain : MonoBehaviour {
             {
                 Destroy(G);
             }
+            Array.Clear(virtualPlanes, 0, virtualPlanes.Length);
+            Array.Clear(planes, 0, planes.Length);
+            Array.Clear(virtualVertices, 0, virtualVertices.Length);
+
             virtualPlanes = new VirtualSubPlane[0,0];
             planes = new GameObject[0, 0];
             virtualVertices = new Vector3[0];
         }
         chunkParrent = new GameObject("Terrain");
-        randomSeed = (float)Random.Range(150, 300) / 100;
+        randomSeed = (float)UnityEngine.Random.Range(150, 300) / 100;
         //buildThread = new Thread(GenerateVirtualVertices);
         virtualPlanes = new VirtualSubPlane[xSize, zSize];
         planes = new GameObject[xSize, zSize];
@@ -181,6 +186,10 @@ public class CreateTerrain : MonoBehaviour {
                 planeMesh.RecalculateNormals();
             }
         }
+
+        Array.Clear(virtualPlanes, 0, virtualPlanes.Length);
+        Array.Clear(planes, 0, planes.Length);
+        Array.Clear(virtualVertices, 0, virtualVertices.Length);
     }
 
     #region Debuging
