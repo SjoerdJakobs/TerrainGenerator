@@ -30,6 +30,8 @@ public class CreateTerrain : MonoBehaviour {
     private float randomSeed;
     private float randomDetai;
 
+    private bool shouldBuild = true;
+
     [SerializeField]
     private TerrainType TerrainTypes;    
 
@@ -41,7 +43,7 @@ public class CreateTerrain : MonoBehaviour {
 
 
     Vector3[] virtualVertices;
-    VirtualSubPlane[,] virtualPlanes;
+    VirtualSubPlane[,] virtualPlanes = new VirtualSubPlane[0,0];
     GameObject[,] planes;
     GameObject chunkParrent;
     Thread buildThread;
@@ -49,46 +51,61 @@ public class CreateTerrain : MonoBehaviour {
 
     //readonly object locker = new object();
 
+    void Update()
+    {
+        if (Input.GetKeyDown("space"))
+            Generate();
+        //Debug.Log(xSize*zSize + "calc");
+        //Debug.Log(virtualPlanes.Length + "lenght");
+    }
 
 
     public void Generate()
     {
-        if (chunkParrent != null)
+        if (chunkParrent != null && virtualPlanes.Length != xSize * zSize)
         {
+            //Debug.Log("destroy");
             Destroy(chunkParrent);
             foreach (GameObject G in planes)
             {
                 Destroy(G);
             }
-            Array.Clear(virtualPlanes, 0, virtualPlanes.Length);
-            Array.Clear(planes, 0, planes.Length);
-            Array.Clear(virtualVertices, 0, virtualVertices.Length);
+            shouldBuild = true;
+        }
 
-            virtualPlanes = new VirtualSubPlane[0,0];
-            planes = new GameObject[0, 0];
-            virtualVertices = new Vector3[0];
-        }
-        chunkParrent = new GameObject("Terrain");
-        randomSeed = (float)UnityEngine.Random.Range(150, 300) / 100;
-        //buildThread = new Thread(GenerateVirtualVertices);
-        virtualPlanes = new VirtualSubPlane[xSize, zSize];
-        planes = new GameObject[xSize, zSize];
-        for (int i = 0, z = 0; z < zSize; z++)
+        if (shouldBuild || virtualPlanes == null)
         {
-            for (int x = 0; x < xSize; x++, i++)
+            chunkParrent = new GameObject("Terrain");
+            //Debug.Log("create");
+            virtualPlanes = new VirtualSubPlane[xSize, zSize];
+            planes = new GameObject[xSize, zSize];
+            for (int i = 0, z = 0; z < zSize; z++)
             {
-                GameObject chunk = new GameObject("chunk");
-                VirtualSubPlane virtualPlane = new VirtualSubPlane();
-                chunk.transform.localScale = new Vector3(scaleModefier, 1, scaleModefier);
-                chunk.transform.position = new Vector3(((x*20) * scaleModefier)-x*(1*scaleModefier), 0, ((z*20) * scaleModefier)-z*(1*scaleModefier));
-                chunk.AddComponent<CreatePlane>().Generate();
-                chunk.GetComponent<Renderer>().material = terrainMat;
-                planes[x, z] = chunk;
-                virtualPlane.vertices = chunk.GetComponent<MeshFilter>().sharedMesh.vertices;
-                virtualPlanes[x, z] = virtualPlane;
-                chunk.transform.parent = chunkParrent.transform;
+                for (int x = 0; x < xSize; x++, i++)
+                {
+                    GameObject chunk = new GameObject("chunk");
+
+                    VirtualSubPlane virtualPlane = new VirtualSubPlane();
+
+                    chunk.transform.localScale = new Vector3(scaleModefier, 1, scaleModefier);
+                    chunk.transform.position = new Vector3(((x * 20) * scaleModefier) - x * (1 * scaleModefier), 0, ((z * 20) * scaleModefier) - z * (1 * scaleModefier));
+
+                    chunk.AddComponent<CreatePlane>().Generate();
+                    chunk.GetComponent<Renderer>().material = terrainMat;
+                    planes[x, z] = chunk;
+                    virtualPlane.vertices = chunk.GetComponent<MeshFilter>().sharedMesh.vertices;
+                    virtualPlane.normals = new Vector3[20 * 20];
+                    virtualPlanes[x, z] = virtualPlane;
+                    chunk.transform.parent = chunkParrent.transform;
+                }
             }
+            shouldBuild = false;
         }
+
+        randomSeed = (float)UnityEngine.Random.Range(150, 300) / 100;
+
+
+
         //buildThread.Start();
         GenerateVirtualVertices();
         SetPlaneVertices();
@@ -108,11 +125,21 @@ public class CreateTerrain : MonoBehaviour {
             }
         }
         for (int v = 0; v < virtualVertices.Length; v++)
-        {
+        {        
+            for (int i = 0; i < perlinModifiers.Count; i++)
+            {
+                randomHeight = perlinModifiers[i].heightScale + perlinModifiers[i].heightScale * (randomSeed / 10);
+                randomDetai = perlinModifiers[i].detai * (randomSeed / 2);
+                virtualVertices[v].y += perlinModifiers[i].slopeRatio.Evaluate(Mathf.PerlinNoise(((virtualVertices[v].x + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed)) * randomHeight;
+            }
+            //virtualVertices[v].y = (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai) * randomSeed) * randomHeight) - ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
+            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 500) / randomDetai/1000) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai/500) * randomSeed) * (randomHeight/10));
+            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 1.2f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 4f) * randomSeed) * (randomHeight / 20));
+            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 0.1f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 1f) * randomSeed) * (randomHeight / 40));
             switch (TerrainTypes)
             {
                 case TerrainType.flat:
-                    
+
                     break;
                 case TerrainType.inlandSea:
                     virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
@@ -133,20 +160,11 @@ public class CreateTerrain : MonoBehaviour {
                     virtualVertices[v].y -= ((Mathf.Pow(virtualVertices[v].x - gridDimx * scaleModefier / 2, 2) / pulldownModefier) - xSize) + ((Mathf.Pow(virtualVertices[v].z - gridDimz * scaleModefier / 2, 2) / pulldownModefier) - zSize);
                     break;
                 default:
-                    Debug.LogError("wrong switch input");
+                    //Debug.LogError("wrong switch input");
                     break;
             }
-            for (int i = 0; i < perlinModifiers.Count; i++)
-            {
-                randomHeight = perlinModifiers[i].heightScale + perlinModifiers[i].heightScale * (randomSeed / 10);
-                randomDetai = perlinModifiers[i].detai * (randomSeed / 2);
-                virtualVertices[v].y += perlinModifiers[i].slopeRatio.Evaluate(Mathf.PerlinNoise(((virtualVertices[v].x + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + perlinModifiers[i].seed - 1000) / randomDetai) * randomSeed)) * randomHeight;
-            }
-            //virtualVertices[v].y = (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / randomDetai) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai) * randomSeed) * randomHeight) - ((Mathf.Pow(virtualVertices[v].x - gridDimx*scaleModefier/2, 2) / pulldownModefier)-xSize) - ((Mathf.Pow(virtualVertices[v].z-gridDimz*scaleModefier/2, 2) / pulldownModefier)-zSize);
-            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 500) / randomDetai/1000) * randomSeed, ((virtualVertices[v].z + seed - 1000) / randomDetai/500) * randomSeed) * (randomHeight/10));
-            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 1.2f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 4f) * randomSeed) * (randomHeight / 20));
-            //virtualVertices[v].y += (Mathf.PerlinNoise(((virtualVertices[v].x + seed - 1000) / 0.1f) * randomSeed, ((virtualVertices[v].z + seed - 1000) / 1f) * randomSeed) * (randomHeight / 40));
         }
+        //Debug.Log("recalculate");
     }
 
     void SetPlaneVertices()
@@ -175,6 +193,53 @@ public class CreateTerrain : MonoBehaviour {
                 }
             }
             virtualPlanes[subPlanex, subPlanez].vertices[(row * 20) + j].y = virtualVertices[i].y;
+            Vector3 East;
+            Vector3 West;
+            Vector3 North;
+            Vector3 South;
+
+            if(virtualVertices[i - 1] == null || i-1 < 0)
+            {
+                //East = virtualVertices[i - 1];
+                East = virtualVertices[i];
+            }
+            else
+            {
+                East = virtualVertices[i-1];
+                //East = virtualVertices[i];
+            }
+            if (virtualVertices[i + 1] == null || i + 1 >= virtualVertices.Length)
+            {
+                //West = virtualVertices[i + 1];
+                West = virtualVertices[i];
+            }
+            else
+            {
+                West = virtualVertices[i+1];
+                //West = virtualVertices[i];
+            }
+            if (virtualVertices[i + ((xSize * 19))] == null || i + ((xSize * 19)) >= virtualVertices.Length)
+            {
+                //North = virtualVertices[i + ((xSize * 20) - 1)];
+                North = virtualVertices[i];
+            }
+            else
+            {
+                North = virtualVertices[i + ((xSize * 19))];
+                //North = virtualVertices[i];
+            }
+            if (virtualVertices[i - ((xSize * 19))] == null || i - ((xSize * 19)) < 0)
+            {
+                //South = virtualVertices[i - ((xSize * 20) - 1)];
+                South = virtualVertices[i];
+            }
+            else
+            {
+                South = virtualVertices[i - ((xSize * 19))];
+                //South = virtualVertices[i];
+            }
+            virtualPlanes[subPlanex, subPlanez].normals[(row * 20) + j] = 
+                Vector3.Normalize(Vector3.Cross(East-West,North-South));
         } 
         for (int i = 0, z = 0; z < zSize; z++)
         {
@@ -183,13 +248,13 @@ public class CreateTerrain : MonoBehaviour {
                 Mesh planeMesh = planes[x, z].GetComponent<MeshFilter>().sharedMesh;
                 planeMesh.vertices = virtualPlanes[x, z].vertices;
                 planeMesh.RecalculateBounds();
-                planeMesh.RecalculateNormals();
+                planeMesh.normals = virtualPlanes[x, z].normals;
+                
+                planes[x, z].AddComponent<MeshCollider>();
             }
         }
-
-        Array.Clear(virtualPlanes, 0, virtualPlanes.Length);
-        Array.Clear(planes, 0, planes.Length);
-        Array.Clear(virtualVertices, 0, virtualVertices.Length);
+        //Debug.Log("modified");
+        Resources.UnloadUnusedAssets();
     }
 
     #region Debuging
@@ -238,6 +303,7 @@ public class CreateTerrain : MonoBehaviour {
 public class VirtualSubPlane
 {
     public Vector3[] vertices;
+    public Vector3[] normals;
 }
 
 [System.Serializable]

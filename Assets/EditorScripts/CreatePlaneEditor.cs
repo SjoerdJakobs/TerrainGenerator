@@ -19,7 +19,7 @@ public class CreatePlaneEditor : Editor
         }
         if (GUILayout.Button("debug"))
         {
-            planeGen.DebugNodes();
+
         }
     }
 }

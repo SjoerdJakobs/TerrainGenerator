@@ -19,7 +19,6 @@ public class CreatePlane : MonoBehaviour
 
     private Mesh mesh;
     private Vector3[] vertices;
-    private Vector3[] debugVertices;
 
     public void Generate()
     {
@@ -56,35 +55,5 @@ public class CreatePlane : MonoBehaviour
         }
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
-    }
-
-    public void DebugNodes()
-    {
-        StartCoroutine(DebugGrid());
-    }
-
-    //public void Debug()
-    public IEnumerator DebugGrid()
-    {
-        debugVertices = new Vector3[vertices.Length];
-        showDebugGizmos = true;
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            debugVertices[i] = vertices[i];
-            yield return new WaitForSeconds(.1f);
-        }
-        showDebugGizmos = false;
-        yield return null;
-    }
-    public void OnDrawGizmos()
-    {
-        if (showDebugGizmos && vertices.Length >= 0)
-        {
-            foreach (Vector3 v in debugVertices)
-            {
-                Gizmos.color = Color.red;
-                Gizmos.DrawCube(v+transform.position, Vector3.one / 2);
-            }
-        }
     }
 }
